@@ -1,1 +1,1 @@
-# MNIST.github.io
+# This is the README file for the project of application of CNN for MNIST dataset.

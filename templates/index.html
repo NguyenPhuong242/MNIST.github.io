@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digit Predictor</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Draw a Digit</h1>
+    <canvas id="canvas" width="280" height="280"></canvas>
+    <div class="buttons">
+        <button onclick="clearCanvas()">Clear</button>
+        <button onclick="saveImage()">Save</button>
+        <button onclick="predictDigit()">Predict</button>
+    </div>
+    <div id="result"></div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        let drawing = false;
+
+        canvas.addEventListener('mousedown', () => drawing = true);
+        canvas.addEventListener('mouseup', () => drawing = false);
+        canvas.addEventListener('mouseleave', () => drawing = false);
+        canvas.addEventListener('mousemove', draw);
+
+        function draw(event) {
+            if (!drawing) return;
+            ctx.fillStyle = "black";
+            ctx.beginPath();
+            ctx.arc(event.offsetX, event.offsetY, 8, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function clearCanvas() {
+            ctx.fillStyle = "white";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            document.getElementById('result').innerText = '';
+        }
+
+        function saveImage() {
+            const imageData = canvas.toDataURL();
+            fetch('/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image: imageData })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+            })
+            .catch(err => console.error(err));
+        }
+
+        function predictDigit() {
+            const imageData = canvas.toDataURL();
+            fetch('/predict', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image: imageData })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const { digit, probabilities } = data;
+                let resultText = `Predicted Digit: ${digit}\nProbabilities:\n`;
+                probabilities.forEach((prob, i) => {
+                    resultText += `${i}: ${(prob * 100).toFixed(2)}%\n`;
+                });
+                document.getElementById('result').innerText = resultText;
+            })
+            .catch(err => console.error(err));
+        }
+    </script>
+</body>
+</html>
